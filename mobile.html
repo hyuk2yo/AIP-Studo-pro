@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>A.I.P PRO - Mobile Danbooru Studio</title>
+  <style>
+    :root {
+      --bg-base: #f8fafc;
+      --bg-panel: #ffffff;
+      --bg-card: #ffffff;
+      --bg-chip: #f1f5f9;
+      --bg-chip-hover: #e2e8f0;
+      --border-color: #e2e8f0;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --text-main: #0f172a;
+      --text-sub: #334155;
+      --text-muted: #64748b;
+
+      --cat-quality: #d97706;
+      --cat-hair: #7c3aed;
+      --cat-face: #0284c7;
+      --cat-clothing: #ea580c;
+      --cat-scene: #db2777;
+      --cat-character: #059669;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 상단 탑바 */
+    header {
+      height: 50px;
+      padding: 0 1rem;
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .brand-title span.blue-text {
+      color: var(--accent);
+    }
+
+    .mobile-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    /* 모바일 상단 가로 스크롤 카테고리 탭 */
+    .mobile-category-nav {
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 0.5rem 0.75rem;
+      gap: 0.45rem;
+      flex-shrink: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mobile-category-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 20px;
+      background-color: var(--bg-chip);
+      color: var(--text-sub);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .cat-tab.active {
+      background-color: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .cat-tab .badge {
+      font-size: 0.65rem;
+      opacity: 0.8;
+    }
+
+    /* 검색 및 실시간 필터 인풋 바 */
+    .mobile-search-bar {
+      padding: 0.6rem 0.85rem;
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .mobile-input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      outline: none;
+      background-color: var(--bg-chip);
+    }
+
+    .mobile-input:focus {
+      background-color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    /* 메인 카드 피드 영역 */
+    main#mobile-card-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-bottom: 90px; /* 하단 바텀 시트 여백 */
+    }
+
+    .sub-group-card {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .sub-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .sub-card-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .sub-card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .sub-card-title {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .sub-card-count {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background-color: #f1f5f9;
+      padding: 0.1rem 0.4rem;
+      border-radius: 5px;
+    }
+
+    .sub-card-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .tag-btn {
+      background-color: var(--bg-chip);
+      color: var(--text-sub);
+      border: 1px solid transparent;
+      padding: 0.45rem 0.65rem;
+      border-radius: 7px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .tag-btn.active {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .tag-btn .btn-count {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.04);
+      padding: 0.05rem 0.25rem;
+      border-radius: 4px;
+    }
+
+    .tag-btn.active .btn-count {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .card-more-btn {
+      align-self: center;
+      margin-top: 0.3rem;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--accent);
+      background-color: var(--accent-soft);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* 하단 플로팅 바텀 시트 (Drawer) */
+    .bottom-sheet-wrapper {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      border-top: 1px solid var(--border-color);
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(calc(100% - 64px));
+    }
+
+    .bottom-sheet-wrapper.expanded {
+      transform: translateY(0);
+    }
+
+    .sheet-handle-bar {
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background-color: #ffffff;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .sheet-handle-pill {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 4px;
+      background-color: #cbd5e1;
+      border-radius: 2px;
+    }
+
+    .sheet-status-text {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .sheet-actions-quick {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .sheet-btn {
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    .sheet-btn-copy {
+      background-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .sheet-btn-gen {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+
+    /* 시트 확장 시 내부 영역 */
+    .sheet-content {
+      padding: 0.5rem 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 55vh;
+      overflow-y: auto;
+    }
+
+    .chip-container-mobile {
+      min-height: 70px;
+      max-height: 120px;
+      overflow-y: auto;
+      background-color: var(--bg-chip);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.45rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .mobile-chip {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .mobile-chip .remove {
+      color: #ef4444;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .sheet-image-preview {
+      width: 100%;
+      height: 180px;
+      background-color: #f1f5f9;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .sheet-image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <header>
+    <div class="brand-title">
+      A.I.P <span class="blue-text">PRO</span>
+      <span class="mobile-badge">MOBILE</span>
+    </div>
+    <span id="load-status" style="font-size: 0.7rem; color: #059669; font-weight: 700;">DB 로딩 중...</span>
+  </header>
+
+  <!-- 가로 스크롤 카테고리 탭 바 -->
+  <nav class="mobile-category-nav" id="category-tabs">
+    <div class="cat-tab active" data-cat="quality">품질/화풍 <span class="badge" id="b-quality">0</span></div>
+    <div class="cat-tab" data-cat="hair">헤어 <span class="badge" id="b-hair">0</span></div>
+    <div class="cat-tab" data-cat="face">표정/시선 <span class="badge" id="b-face">0</span></div>
+    <div class="cat-tab" data-cat="clothing">의상/패션 <span class="badge" id="b-clothing">0</span></div>
+    <div class="cat-tab" data-cat="scene">구도/배경 <span class="badge" id="b-scene">0</span></div>
+    <div class="cat-tab" data-cat="character">인물/신체 <span class="badge" id="b-character">0</span></div>
+  </nav>
+
+  <!-- 검색 바 -->
+  <div class="mobile-search-bar">
+    <input type="text" id="filter-input" class="mobile-input" placeholder="현재 화면 실시간 태그 필터링...">
+  </div>
+
+  <!-- 세분화 카드 피드 -->
+  <main id="mobile-card-feed"></main>
+
+  <!-- 하단 고정 바텀 시트 (프롬프트 서랍) -->
+  <div class="bottom-sheet-wrapper" id="bottom-sheet">
+    <div class="sheet-handle-pill"></div>
+    <div class="sheet-handle-bar" id="sheet-header">
+      <div class="sheet-status-text" id="sheet-counter">선택된 태그: 0개</div>
+      <div class="sheet-actions-quick">
+        <button class="sheet-btn sheet-btn-copy" id="copy-btn">복사</button>
+        <button class="sheet-btn sheet-btn-gen" id="gen-btn">생성</button>
+      </div>
+    </div>
+
+    <!-- 확장 시 열리는 프롬프트 상세 영역 -->
+    <div class="sheet-content">
+      <div class="chip-container-mobile" id="chip-box"></div>
+      <div class="sheet-image-preview" id="preview-box">
+        생성 버튼을 누르면 AI 렌더링이 시작됩니다.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const categoryAutoRules = {
+      quality: {
+        color: "var(--cat-quality)",
+        title: "품질 & 화풍",
+        groups: [
+          { title: "마스터 품질 & 디테일", match: t => /masterpiece|quality|highres|absurdres|detailed/i.test(t) },
+          { title: "선화 & 흑백", match: t => /monochrome|greyscale|lineart|sketch|comic/i.test(t) },
+          { title: "화풍 & 미디어", match: t => /watercolor|traditional|pixel|oil_painting/i.test(t) }
+        ]
+      },
+      hair: {
+        color: "var(--cat-hair)",
+        title: "헤어 스타일",
+        groups: [
+          { title: "길이 & 기본 컷", match: t => /short_hair|long_hair|medium_hair|bob_cut/i.test(t) },
+          { title: "묶음 스타일", match: t => /ponytail|twintails|braid|bun/i.test(t) },
+          { title: "헤어 컬러", match: t => /_hair/i.test(t) && /black|blonde|brown|blue|silver|white|pink/i.test(t) }
+        ]
+      },
+      face: {
+        color: "var(--cat-face)",
+        title: "표정 & 시선",
+        groups: [
+          { title: "눈 컬러 & 동공", match: t => /eyes|pupil|heterochromia/i.test(t) },
+          { title: "미소 & 표정", match: t => /smile|grin|smirk|laugh|open_mouth/i.test(t) },
+          { title: "홍조 & 감정", match: t => /blush|shy|pout|crying|tears|serious/i.test(t) }
+        ]
+      },
+      clothing: {
+        color: "var(--cat-clothing)",
+        title: "의상 & 패션",
+        groups: [
+          { title: "교복 & 학원물", match: t => /uniform|serafuku|sailor|blazer/i.test(t) },
+          { title: "상의 & 아우터", match: t => /shirt|hoodie|sweater|jacket|coat/i.test(t) },
+          { title: "하의 & 스커트", match: t => /skirt|shorts|pants/i.test(t) },
+          { title: "원피스 & 수영복", match: t => /dress|maid|swimsuit|bikini/i.test(t) }
+        ]
+      },
+      scene: {
+        color: "var(--cat-scene)",
+        title: "구도 & 배경",
+        groups: [
+          { title: "카메라 앵글", match: t => /shot|view|angle|portrait|full_body/i.test(t) },
+          { title: "자세 & 포즈", match: t => /standing|sitting|lying|pose|holding/i.test(t) },
+          { title: "배경 & 장소", match: t => /background|indoors|outdoors|sky|night|room/i.test(t) }
+        ]
+      },
+      character: {
+        color: "var(--cat-character)",
+        title: "인물 & 신체",
+        groups: [
+          { title: "인원수", match: t => /^1girl$|^2girls$|solo|^1boy$/i.test(t) },
+          { title: "신체 특징", match: t => /breasts|cleavage|navel|thighs/i.test(t) },
+          { title: "동물 귀 & 판타지", match: t => /ears|wings|halo|horns|tail/i.test(t) }
+        ]
+      }
+    };
+
+    let globalTagDB = [];
+    const selectedTags = new Set();
+    let currentCategory = "quality";
+    const cardPageLimits = {};
+    const INITIAL_LIMIT = 20;
+
+    const feed = document.getElementById("mobile-card-feed");
+    const filterInput = document.getElementById("filter-input");
+    const bottomSheet = document.getElementById("bottom-sheet");
+    const sheetHeader = document.getElementById("sheet-header");
+    const sheetCounter = document.getElementById("sheet-counter");
+    const chipBox = document.getElementById("chip-box");
+    const copyBtn = document.getElementById("copy-btn");
+    const genBtn = document.getElementById("gen-btn");
+    const previewBox = document.getElementById("preview-box");
+    const loadStatus = document.getElementById("load-status");
+
+    // 1. tags_db.json 로드
+    async function initDB() {
+      try {
+        const res = await fetch("./tags_db.json");
+        globalTagDB = await res.json();
+        loadStatus.textContent = "14만 태그 가동됨";
+
+        // 카테고리 뱃지 업데이트
+        const counts = { quality: 0, hair: 0, face: 0, clothing: 0, scene: 0, character: 0 };
+        globalTagDB.forEach(t => { if (counts[t.category] !== undefined) counts[t.category]++; });
+        Object.keys(counts).forEach(k => {
+          const el = document.getElementById(`b-${k}`);
+          if (el) el.textContent = counts[k].toLocaleString();
+        });
+
+        renderMobileFeed();
+      } catch (err) {
+        loadStatus.textContent = "DB 로드 실패";
+      }
+    }
+
+    // 2. 피드 렌더링
+    function renderMobileFeed() {
+      feed.innerHTML = "";
+      const query = filterInput.value.trim().toLowerCase();
+      const conf = categoryAutoRules[currentCategory];
+      if (!conf) return;
+
+      let tagsInCat = globalTagDB.filter(t => t.category === currentCategory);
+      if (query) tagsInCat = tagsInCat.filter(t => t.tag.toLowerCase().includes(query));
+
+      const buckets = conf.groups.map(g => ({ title: g.title, list: [] }));
+      const miscList = [];
+
+      tagsInCat.forEach(item => {
+        let matched = false;
+        for (let i = 0; i < conf.groups.length; i++) {
+          if (conf.groups[i].match(item.tag)) {
+            buckets[i].list.push(item);
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) miscList.push(item);
+      });
+
+      buckets.forEach((b, idx) => {
+        if (b.list.length > 0) createCard(`${currentCategory}_${idx}`, b.title, b.list, conf.color);
+      });
+
+      if (miscList.length > 0) {
+        createCard(`${currentCategory}_misc`, "기타 태그", miscList, conf.color);
+      }
+    }
+
+    function createCard(id, title, list, color) {
+      const card = document.createElement("div");
+      card.className = "sub-group-card";
+
+      const header = document.createElement("div");
+      header.className = "sub-card-header";
+
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "sub-card-title-wrap";
+
+      const dot = document.createElement("div");
+      dot.className = "sub-card-dot";
+      dot.style.backgroundColor = color;
+
+      const titleText = document.createElement("span");
+      titleText.className = "sub-card-title";
+      titleText.textContent = title;
+
+      titleWrap.appendChild(dot);
+      titleWrap.appendChild(titleText);
+
+      const countBadge = document.createElement("span");
+      countBadge.className = "sub-card-count";
+      countBadge.textContent = `${list.length}개`;
+
+      header.appendChild(titleWrap);
+      header.appendChild(countBadge);
+
+      const chips = document.createElement("div");
+      chips.className = "sub-card-chips";
+
+      if (!cardPageLimits[id]) cardPageLimits[id] = INITIAL_LIMIT;
+      const limit = cardPageLimits[id];
+      const slice = list.slice(0, limit);
+
+      slice.forEach(t => {
+        const btn = document.createElement("button");
+        btn.className = "tag-btn";
+        if (selectedTags.has(t.tag)) btn.classList.add("active");
+        btn.dataset.tag = t.tag;
+
+        const cnt = t.count ? Number(t.count).toLocaleString() : "";
+        btn.innerHTML = `<span>${t.tag}</span>${cnt ? `<span class="btn-count">${cnt}</span>` : ""}`;
+        btn.addEventListener("click", () => toggleTag(t.tag));
+        chips.appendChild(btn);
+      });
+
+      card.appendChild(header);
+      card.appendChild(chips);
+
+      if (list.length > limit) {
+        const moreBtn = document.createElement("button");
+        moreBtn.className = "card-more-btn";
+        moreBtn.textContent = `+20개 더보기 (남은 ${list.length - limit}개)`;
+        moreBtn.addEventListener("click", () => {
+          cardPageLimits[id] += 20;
+          renderMobileFeed();
+        });
+        card.appendChild(moreBtn);
+      }
+
+      feed.appendChild(card);
+    }
+
+    // 태그 토글 및 칩 동기화
+    function toggleTag(tag) {
+      if (selectedTags.has(tag)) selectedTags.delete(tag);
+      else selectedTags.add(tag);
+
+      document.querySelectorAll(".tag-btn").forEach(b => {
+        b.classList.toggle("active", selectedTags.has(b.dataset.tag));
+      });
+
+      sheetCounter.textContent = `선택된 태그: ${selectedTags.size}개`;
+
+      chipBox.innerHTML = "";
+      selectedTags.forEach(t => {
+        const chip = document.createElement("div");
+        chip.className = "mobile-chip";
+        chip.innerHTML = `<span>${t}</span><span class="remove">&times;</span>`;
+        chip.querySelector(".remove").addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleTag(t);
+        });
+        chipBox.appendChild(chip);
+      });
+    }
+
+    // 바텀 시트 열고 닫기 토글
+    sheetHeader.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON") return;
+      bottomSheet.classList.toggle("expanded");
+    });
+
+    // 상단 탭 전환
+    document.querySelectorAll(".cat-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".cat-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentCategory = tab.dataset.cat;
+        filterInput.value = "";
+        renderMobileFeed();
+      });
+    });
+
+    filterInput.addEventListener("input", renderMobileFeed);
+
+    // 복사 기능
+    copyBtn.addEventListener("click", async () => {
+      if (selectedTags.size === 0) return;
+      await navigator.clipboard.writeText(Array.from(selectedTags).join(", "));
+      copyBtn.textContent = "완료!";
+      setTimeout(() => copyBtn.textContent = "복사", 1200);
+    });
+
+    // 이미지 실시간 생성
+    genBtn.addEventListener("click", () => {
+      if (selectedTags.size === 0) {
+        alert("태그를 먼저 선택해주세요.");
+        return;
+      }
+      bottomSheet.classList.add("expanded");
+      previewBox.innerHTML = "렌더링 중...";
+
+      const promptStr = Array.from(selectedTags).join(", ");
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptStr)}?width=512&height=512&seed=${seed}&nologo=true`;
+
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        previewBox.innerHTML = "";
+        previewBox.appendChild(img);
+      };
+      img.onerror = () => {
+        previewBox.innerHTML = "생성 실패";
+      };
+    });
+
+    initDB();
+  </script>
+</body>
+</html>
